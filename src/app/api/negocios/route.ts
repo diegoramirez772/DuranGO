@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import { supabase } from '@/lib/supabase'
-import { procesarRegistroVoz } from '@/agents/agente-negocios'
+import { procesarRegistroVoz, generarSugerenciaRedes } from '@/agents/agente-negocios'
 
 export async function GET() {
   const { data, error } = await supabase
@@ -17,16 +17,18 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   const body = await request.json()
-  const { transcripcion, nombre, categoria, descripcion, direccion, telefono, horario, lat, lng } = body
+  const { transcripcion, nombre, categoria, descripcion, direccion, lat, lng } = body
 
   if (transcripcion) {
     const resultado = await procesarRegistroVoz(transcripcion)
-
     if (!resultado.exito) {
       return Response.json({ error: resultado.error }, { status: 400 })
     }
-
-    return Response.json({ negocio: resultado.negocio, datos: resultado.datos })
+    return Response.json({
+      negocio: resultado.negocio,
+      datos: resultado.datos,
+      sugerenciaRedes: resultado.sugerenciaRedes,
+    })
   }
 
   if (!nombre || !categoria) {
@@ -39,10 +41,11 @@ export async function POST(request: NextRequest) {
       nombre,
       categoria,
       descripcion,
-      direccion,
+      direccion: direccion || 'Durango, Dgo.',
       horario: body.horario ?? null,
       telefono: body.telefono ?? null,
       imagen_url: body.imagen_url ?? null,
+      link_redes: body.link_redes ?? null,
       lat: lat ?? 24.0277,
       lng: lng ?? -104.6532,
     })
@@ -53,5 +56,8 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: 'Error al guardar el negocio en base de datos' }, { status: 500 })
   }
 
-  return Response.json({ negocio: data })
+  // Generar sugerencia de redes en paralelo (no bloquea la respuesta)
+  const sugerenciaRedes = await generarSugerenciaRedes(nombre, categoria, descripcion ?? '')
+
+  return Response.json({ negocio: data, sugerenciaRedes })
 }

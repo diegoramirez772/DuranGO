@@ -1,7 +1,143 @@
 'use client'
 
 import { useState } from "react";
-import { MapPin, Clock, ChevronRight, X, Star } from "lucide-react";
+import { MapPin, Clock, ChevronRight, X, Star, Sparkles, Loader2 } from "lucide-react";
+
+interface ParadaIA {
+  negocio: { id: string; nombre: string; categoria: string; direccion: string; lat: number; lng: number };
+  tiempo_sugerido: number;
+}
+
+interface RutaIA {
+  descripcion: string;
+  paradas: ParadaIA[];
+}
+
+const TIPO_OPCIONES = [
+  { id: "gastronomica", label: "🌮 Gastronómica", color: "#C0571E" },
+  { id: "artesanal", label: "✂️ Artesanal", color: "#1A6B4A" },
+  { id: "mezcal", label: "🥃 Mezcal", color: "#6B3A8A" },
+  { id: "mixta", label: "✨ Mixta", color: "#B8341B" },
+];
+
+function GeneradorRutaIA() {
+  const [tipo, setTipo] = useState("mixta");
+  const [tiempo, setTiempo] = useState(60);
+  const [loading, setLoading] = useState(false);
+  const [ruta, setRuta] = useState<RutaIA | null>(null);
+  const [error, setError] = useState("");
+
+  const generar = async () => {
+    setLoading(true);
+    setError("");
+    setRuta(null);
+    try {
+      const res = await fetch("/api/rutas", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tipo_ruta: tipo, tiempo_disponible: tiempo }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      setRuta(data);
+    } catch {
+      setError("No se pudo generar la ruta. ¿Hay negocios registrados?");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const tipoMeta = TIPO_OPCIONES.find((t) => t.id === tipo)!;
+
+  return (
+    <div style={{ backgroundColor: "white", borderRadius: 20, padding: "28px 32px", border: "1px solid #F0E8D8", boxShadow: "0 4px 24px rgba(0,0,0,0.06)", marginBottom: 48 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
+        <div style={{ width: 36, height: 36, borderRadius: "50%", backgroundColor: "#F5E8E4", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <Sparkles size={16} color="#B8341B" />
+        </div>
+        <div>
+          <p style={{ fontSize: 15, fontWeight: 700, color: "#1C1008", margin: 0, fontFamily: "'Inter', sans-serif" }}>Genera tu ruta con IA</p>
+          <p style={{ fontSize: 12, color: "#B09878", margin: 0, fontFamily: "'Inter', sans-serif" }}>Basada en los negocios reales de Durango</p>
+        </div>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 20 }}>
+        <div>
+          <p style={{ fontSize: 12, fontWeight: 600, color: "#1C1008", marginBottom: 8, fontFamily: "'Inter', sans-serif" }}>Tipo de ruta</p>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {TIPO_OPCIONES.map((t) => (
+              <button
+                key={t.id}
+                onClick={() => setTipo(t.id)}
+                style={{ padding: "5px 12px", borderRadius: 16, border: `1.5px solid ${tipo === t.id ? t.color : "#E8D9C4"}`, backgroundColor: tipo === t.id ? t.color : "white", color: tipo === t.id ? "white" : "#5C3A1E", fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "'Inter', sans-serif", transition: "all 0.2s" }}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <p style={{ fontSize: 12, fontWeight: 600, color: "#1C1008", marginBottom: 8, fontFamily: "'Inter', sans-serif" }}>Tiempo disponible: <span style={{ color: "#B8341B" }}>{tiempo} min</span></p>
+          <input
+            type="range"
+            min={30}
+            max={180}
+            step={15}
+            value={tiempo}
+            onChange={(e) => setTiempo(Number(e.target.value))}
+            style={{ width: "100%", accentColor: "#B8341B" }}
+          />
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "#B09878", fontFamily: "'Inter', sans-serif" }}>
+            <span>30 min</span><span>3 hrs</span>
+          </div>
+        </div>
+      </div>
+
+      <button
+        onClick={generar}
+        disabled={loading}
+        style={{ width: "100%", padding: "12px 0", backgroundColor: loading ? "#E8C0B8" : "#B8341B", color: "white", border: "none", borderRadius: 12, fontSize: 14, fontWeight: 600, cursor: loading ? "default" : "pointer", fontFamily: "'Inter', sans-serif", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, transition: "background-color 0.2s" }}
+      >
+        {loading ? <><Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} /> Generando con IA...</> : "✨ Generar mi ruta"}
+      </button>
+
+      {error && <p style={{ fontSize: 12, color: "#B8341B", marginTop: 12, fontFamily: "'Inter', sans-serif" }}>{error}</p>}
+
+      {ruta && (
+        <div style={{ marginTop: 20, borderTop: "1px solid #F0E8D8", paddingTop: 20 }}>
+          <p style={{ fontSize: 13, color: "#3C2010", lineHeight: 1.6, fontFamily: "'Inter', sans-serif", marginBottom: 16 }}>
+            {ruta.descripcion}
+          </p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {ruta.paradas.map((p, i) => (
+              <div key={p.negocio.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", backgroundColor: "#F5F0E8", borderRadius: 12, border: `1.5px solid ${tipoMeta.color}20` }}>
+                <div style={{ width: 28, height: 28, borderRadius: "50%", backgroundColor: tipoMeta.color, color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, flexShrink: 0 }}>
+                  {i + 1}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: "#1C1008", margin: "0 0 2px", fontFamily: "'Inter', sans-serif" }}>{p.negocio.nombre}</p>
+                  <p style={{ fontSize: 11, color: "#7C4A2A", margin: 0, fontFamily: "'Inter', sans-serif" }}>
+                    <MapPin size={10} style={{ display: "inline", marginRight: 3 }} />{p.negocio.direccion.split(',')[0]}
+                    <span style={{ marginLeft: 8 }}><Clock size={10} style={{ display: "inline", marginRight: 3 }} />{p.tiempo_sugerido} min</span>
+                  </p>
+                </div>
+                <a
+                  href={`https://www.google.com/maps/dir/?api=1&destination=${p.negocio.lat},${p.negocio.lng}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ fontSize: 11, color: tipoMeta.color, fontWeight: 600, textDecoration: "none", fontFamily: "'Inter', sans-serif", display: "flex", alignItems: "center", gap: 3, flexShrink: 0 }}
+                >
+                  Ir <ChevronRight size={12} />
+                </a>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 interface Route {
   id: number;
@@ -329,6 +465,7 @@ export function RutasView() {
 
   return (
     <div style={{ backgroundColor: "#F5F0E8", minHeight: "calc(100vh - 65px)", fontFamily: "'Inter', sans-serif" }}>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       {/* Hero section */}
       <div style={{ padding: "48px 64px 32px", maxWidth: 1200, margin: "0 auto" }}>
         <div style={{ marginBottom: 32 }}>
@@ -350,6 +487,17 @@ export function RutasView() {
           <p style={{ fontSize: 15, color: "#5C3A1E", maxWidth: 520, lineHeight: 1.65 }}>
             Galería de experiencias locales curadas. Sumérgete en la cultura, el sabor y la historia a través de recorridos diseñados para conectar con el corazón de Durango.
           </p>
+        </div>
+
+        {/* Generador IA */}
+        <GeneradorRutaIA />
+
+        {/* Rutas curadas */}
+        <div style={{ marginBottom: 20 }}>
+          <p style={{ fontSize: 12, fontWeight: 700, color: "#B09878", textTransform: "uppercase", letterSpacing: "1.5px", marginBottom: 4, fontFamily: "'Inter', sans-serif" }}>
+            Rutas Curadas
+          </p>
+          <p style={{ fontSize: 14, color: "#5C3A1E", marginBottom: 20 }}>Experiencias editoriales seleccionadas para ti.</p>
         </div>
 
         {/* Filters */}

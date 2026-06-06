@@ -37,6 +37,12 @@ interface BusinessForm {
   lat: number | null;
   lng: number | null;
   photo: string | null;
+  link_redes: string;
+}
+
+interface SugerenciaRedes {
+  instagram: string;
+  tiktok: string;
 }
 
 type GeoStatus = 'idle' | 'loading' | 'success' | 'error';
@@ -350,9 +356,10 @@ export function RegistroView({ onGoToExplore }: { onGoToExplore: (id?: string) =
   const [inputMode, setInputMode] = useState<InputMode>(null);
   const [form, setForm] = useState<BusinessForm>({
     name: "", category: "", phone: "", description: "",
-    hours: "", address: "", lat: null, lng: null, photo: null,
+    hours: "", address: "", lat: null, lng: null, photo: null, link_redes: "",
   });
   const [submittedId, setSubmittedId] = useState<string | null>(null);
+  const [sugerenciaRedes, setSugerenciaRedes] = useState<SugerenciaRedes | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [geoStatus, setGeoStatus] = useState<GeoStatus>('idle');
@@ -479,6 +486,7 @@ export function RegistroView({ onGoToExplore }: { onGoToExplore: (id?: string) =
           direccion: form.address || 'Durango, Dgo.',
           telefono: form.phone || null,
           horario: form.hours || null,
+          link_redes: form.link_redes || null,
           lat: form.lat,
           lng: form.lng,
           imagen_url: form.photo,
@@ -486,6 +494,7 @@ export function RegistroView({ onGoToExplore }: { onGoToExplore: (id?: string) =
       });
       const data = await res.json();
       if (data.negocio?.id) newId = data.negocio.id;
+      if (data.sugerenciaRedes) setSugerenciaRedes(data.sugerenciaRedes);
     } catch { /* continúa */ }
     setSubmittedId(newId);
     setSubmitting(false);
@@ -494,22 +503,71 @@ export function RegistroView({ onGoToExplore }: { onGoToExplore: (id?: string) =
 
   if (submitted) {
     return (
-      <div style={{ minHeight: "calc(100vh - 65px)", backgroundColor: "#F5F0E8", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Inter', sans-serif", padding: 24 }}>
-        <div style={{ textAlign: "center", maxWidth: 420 }}>
-          <div style={{ width: 80, height: 80, borderRadius: "50%", backgroundColor: "#E8F5EF", border: "3px solid #1A6B4A", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px" }}>
-            <Check size={36} color="#1A6B4A" />
+      <div style={{ minHeight: "calc(100vh - 65px)", backgroundColor: "#F5F0E8", fontFamily: "'Inter', sans-serif", padding: 24, overflowY: "auto" }}>
+        <div style={{ maxWidth: 520, margin: "0 auto", paddingTop: 48 }}>
+          {/* Éxito */}
+          <div style={{ textAlign: "center", marginBottom: 32 }}>
+            <div style={{ width: 80, height: 80, borderRadius: "50%", backgroundColor: "#E8F5EF", border: "3px solid #1A6B4A", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" }}>
+              <Check size={36} color="#1A6B4A" />
+            </div>
+            <h2 style={{ fontFamily: "'Playfair Display', serif", color: "#1C1008", fontSize: 28, marginBottom: 10 }}>
+              ¡Tu negocio está en el mapa!
+            </h2>
+            <p style={{ fontSize: 14, color: "#5C3A1E", lineHeight: 1.7 }}>
+              <strong>{form.name || "Tu negocio"}</strong> ya aparece en DuranGo AI. Cualquier persona en Durango puede encontrarte ahora.
+            </p>
           </div>
-          <h2 style={{ fontFamily: "'Playfair Display', serif", color: "#1C1008", fontSize: 28, marginBottom: 12 }}>
-            ¡Tu negocio está listo!
-          </h2>
-          <p style={{ fontSize: 14, color: "#5C3A1E", lineHeight: 1.7, marginBottom: 32 }}>
-            <strong>{form.name || "Tu negocio"}</strong> ya fue agregado al mapa de Durango.
-          </p>
+
+          {/* Sugerencia de redes sociales */}
+          {sugerenciaRedes && (
+            <div style={{ backgroundColor: "white", borderRadius: 16, padding: "24px", border: "1px solid #F0E8D8", marginBottom: 24, boxShadow: "0 2px 12px rgba(0,0,0,0.05)" }}>
+              <p style={{ fontSize: 11, fontWeight: 700, color: "#B8341B", textTransform: "uppercase", letterSpacing: "1px", marginBottom: 16 }}>
+                ✨ La IA generó esto para tus redes
+              </p>
+
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+                  <span style={{ fontSize: 16 }}>📸</span>
+                  <p style={{ fontSize: 12, fontWeight: 700, color: "#1C1008", margin: 0 }}>Instagram</p>
+                </div>
+                <div style={{ backgroundColor: "#F5F0E8", borderRadius: 10, padding: "12px 14px", position: "relative" }}>
+                  <p style={{ fontSize: 13, color: "#3C2010", lineHeight: 1.6, margin: 0, fontFamily: "'Inter', sans-serif" }}>
+                    {sugerenciaRedes.instagram}
+                  </p>
+                  <button
+                    onClick={() => navigator.clipboard?.writeText(sugerenciaRedes.instagram)}
+                    style={{ position: "absolute", top: 8, right: 8, background: "none", border: "1px solid #E8D9C4", borderRadius: 6, padding: "3px 8px", fontSize: 10, color: "#7C4A2A", cursor: "pointer", fontFamily: "'Inter', sans-serif" }}
+                  >
+                    Copiar
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+                  <span style={{ fontSize: 16 }}>🎵</span>
+                  <p style={{ fontSize: 12, fontWeight: 700, color: "#1C1008", margin: 0 }}>TikTok</p>
+                </div>
+                <div style={{ backgroundColor: "#F5F0E8", borderRadius: 10, padding: "12px 14px", position: "relative" }}>
+                  <p style={{ fontSize: 13, color: "#3C2010", lineHeight: 1.6, margin: 0, fontFamily: "'Inter', sans-serif" }}>
+                    {sugerenciaRedes.tiktok}
+                  </p>
+                  <button
+                    onClick={() => navigator.clipboard?.writeText(sugerenciaRedes.tiktok)}
+                    style={{ position: "absolute", top: 8, right: 8, background: "none", border: "1px solid #E8D9C4", borderRadius: 6, padding: "3px 8px", fontSize: 10, color: "#7C4A2A", cursor: "pointer", fontFamily: "'Inter', sans-serif" }}
+                  >
+                    Copiar
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           <button
             onClick={() => onGoToExplore(submittedId || undefined)}
-            style={{ padding: "13px 32px", backgroundColor: "#B8341B", color: "white", border: "none", borderRadius: 12, fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "'Inter', sans-serif" }}
+            style={{ width: "100%", padding: "14px 32px", backgroundColor: "#B8341B", color: "white", border: "none", borderRadius: 12, fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "'Inter', sans-serif" }}
           >
-            Ver en el mapa →
+            Ver mi negocio en el mapa →
           </button>
         </div>
       </div>
@@ -750,6 +808,21 @@ export function RegistroView({ onGoToExplore }: { onGoToExplore: (id?: string) =
               <div style={{ marginBottom: 14 }}>
                 <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#1C1008", marginBottom: 6 }}>Horario de atención</label>
                 <input value={form.hours} onChange={(e) => setForm({ ...form, hours: e.target.value })} placeholder="Ej. Lun–Sáb 8:00–14:00" style={inputStyle} />
+              </div>
+
+              <div style={{ marginBottom: 14 }}>
+                <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#1C1008", marginBottom: 4 }}>
+                  TikTok / Instagram <span style={{ color: "#B09878", fontWeight: 400 }}>(opcional)</span>
+                </label>
+                <p style={{ fontSize: 11, color: "#B09878", marginBottom: 6, fontFamily: "'Inter', sans-serif" }}>
+                  Pega el link de tu perfil o un video — lo mostraremos en tu tarjeta del mapa
+                </p>
+                <input
+                  value={form.link_redes}
+                  onChange={(e) => setForm({ ...form, link_redes: e.target.value })}
+                  placeholder="https://www.tiktok.com/@tunegocio"
+                  style={inputStyle}
+                />
               </div>
 
               <div style={{ marginBottom: 20 }}>

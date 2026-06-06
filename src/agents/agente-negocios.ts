@@ -2,7 +2,6 @@ import { generarTexto } from '@/lib/ai'
 import { supabase } from '@/lib/supabase'
 import type { Negocio, Categoria } from '@/types'
 
-// Coordenadas del centro de Durango como fallback cuando no se menciona ubicación exacta
 const CENTRO_DURANGO = { lat: 24.0277, lng: -104.6532 }
 
 const PROMPT_EXTRACCION = `Extrae los datos del negocio del siguiente texto y responde ÚNICAMENTE con un JSON válido:
@@ -14,8 +13,21 @@ const PROMPT_EXTRACCION = `Extrae los datos del negocio del siguiente texto y re
   "horario": "horario mencionado en formato legible, o null si no se menciona",
   "link_redes": null
 }
-
 No incluyas texto fuera del JSON. No uses markdown ni backticks.`
+
+const PROMPT_REDES = (nombre: string, categoria: string, descripcion: string) =>
+  `Eres experto en marketing local para negocios en Durango, México.
+Genera un post atractivo para Instagram/TikTok del negocio:
+- Nombre: ${nombre}
+- Tipo: ${categoria}
+- Descripción: ${descripcion}
+
+Responde ÚNICAMENTE con JSON válido:
+{
+  "instagram": "caption de Instagram con emojis y hasta 3 hashtags locales #Durango",
+  "tiktok": "texto corto para TikTok, máximo 150 caracteres, con gancho inicial"
+}
+Sin texto fuera del JSON.`
 
 interface DatosExtraidos {
   nombre: string
@@ -26,11 +38,31 @@ interface DatosExtraidos {
   link_redes: string | null
 }
 
+export interface SugerenciaRedes {
+  instagram: string
+  tiktok: string
+}
+
+export async function generarSugerenciaRedes(
+  nombre: string,
+  categoria: string,
+  descripcion: string
+): Promise<SugerenciaRedes | null> {
+  try {
+    const texto = await generarTexto(PROMPT_REDES(nombre, categoria, descripcion))
+    const limpio = texto.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim()
+    return JSON.parse(limpio)
+  } catch {
+    return null
+  }
+}
+
 export async function procesarRegistroVoz(transcripcion: string): Promise<{
   exito: boolean
   negocio?: Negocio
   error?: string
   datos?: DatosExtraidos
+  sugerenciaRedes?: SugerenciaRedes | null
 }> {
   const texto = await generarTexto(`${PROMPT_EXTRACCION}\n\nTexto del comerciante: "${transcripcion}"`)
 
@@ -60,5 +92,7 @@ export async function procesarRegistroVoz(transcripcion: string): Promise<{
     return { exito: false, error: 'Error al guardar el negocio, intenta de nuevo.' }
   }
 
-  return { exito: true, negocio: data as Negocio, datos }
+  const sugerenciaRedes = await generarSugerenciaRedes(datos.nombre, datos.categoria, datos.descripcion)
+
+  return { exito: true, negocio: data as Negocio, datos, sugerenciaRedes }
 }

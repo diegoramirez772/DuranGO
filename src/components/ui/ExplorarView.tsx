@@ -147,6 +147,7 @@ export function ExplorarView() {
   const [inputValue, setInputValue] = useState("");
   const [loading, setLoading] = useState(false);
   const [routeCoords, setRouteCoords] = useState<Coordenada[] | null>(null);
+  const [userLocation, setUserLocation] = useState<Coordenada | null>(null);
 
   // Mic en chat
   const [micStatus, setMicStatus] = useState<'idle' | 'recording' | 'processing'>('idle');
@@ -158,6 +159,17 @@ export function ExplorarView() {
   const [ttsPlaying, setTtsPlaying] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Obtener ubicación del usuario al cargar
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+        () => { /* sin permiso, sin problema */ },
+        { timeout: 5000 }
+      );
+    }
+  }, []);
 
   useEffect(() => {
     fetch('/api/negocios')
@@ -255,7 +267,13 @@ export function ExplorarView() {
           const res = await fetch('/api/agente', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ mensaje: text, historial }),
+            body: JSON.stringify({
+              mensaje: text,
+              historial,
+              contextoUsuario: userLocation
+                ? { ubicacion: `lat:${userLocation.lat.toFixed(4)},lng:${userLocation.lng.toFixed(4)}` }
+                : undefined,
+            }),
           });
           const data = await res.json();
           if (data.error) throw new Error(data.error);
