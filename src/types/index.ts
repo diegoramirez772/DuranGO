@@ -1,4 +1,4 @@
-export type Categoria = 'antojitos' | 'artesanias' | 'mezcal' | 'servicios' | 'otro'
+export type Categoria = 'antojitos' | 'artesanias' | 'mezcal' | 'servicios' | 'tienda' | 'transporte' | 'flores' | 'cafe' | 'otro'
 
 export interface Negocio {
   id: string
@@ -9,6 +9,7 @@ export interface Negocio {
   lat: number
   lng: number
   horario: string
+  telefono?: string | null
   link_redes?: string | null
   created_at: string
 }

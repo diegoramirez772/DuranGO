@@ -1,1 +1,5 @@
-// Vista principal — mapa interactivo + panel de chat conversacional
+import { ExplorarView } from "@/components/ui/ExplorarView";
+
+export default function MapaPage() {
+  return <ExplorarView />;
+}

@@ -2,7 +2,7 @@ import { gemini, MODELO } from '@/lib/gemini'
 import Anthropic from '@anthropic-ai/sdk'
 import type { Intencion, RespuestaAgente } from '@/types'
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY || 'placeholder-anthropic-key' })
 
 const SYSTEM_PROMPT = `Eres el agente central de DuranGo AI, sistema inteligente de consumo local para Durango, México.
 
