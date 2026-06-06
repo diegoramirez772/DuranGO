@@ -1,4 +1,4 @@
-import { gemini, MODELO } from '@/lib/gemini'
+import { generarTexto } from '@/lib/ai'
 import { supabase } from '@/lib/supabase'
 import type { Negocio, Categoria } from '@/types'
 
@@ -32,12 +32,7 @@ export async function procesarRegistroVoz(transcripcion: string): Promise<{
   error?: string
   datos?: DatosExtraidos
 }> {
-  const response = await gemini.models.generateContent({
-    model: MODELO,
-    contents: `${PROMPT_EXTRACCION}\n\nTexto del comerciante: "${transcripcion}"`,
-  })
-
-  const texto = (response.text ?? '{}').trim()
+  const texto = await generarTexto(`${PROMPT_EXTRACCION}\n\nTexto del comerciante: "${transcripcion}"`)
 
   let datos: DatosExtraidos
   try {

@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase'
-import { gemini, MODELO } from '@/lib/gemini'
+import { generarTexto } from '@/lib/ai'
 import type { Negocio } from '@/types'
 
 interface ParamsBusqueda {
@@ -32,15 +32,14 @@ export async function generarRespuestaUsuario(negocios: Negocio[], consulta: str
     .map((n) => `${n.nombre} (${n.categoria}) — ${n.direccion}`)
     .join('\n')
 
-  const response = await gemini.models.generateContent({
-    model: MODELO,
-    contents: `Eres un guía local amigable de Durango, México. El usuario preguntó: "${consulta}".
+  const texto = await generarTexto(
+    `Eres un guía local amigable de Durango, México. El usuario preguntó: "${consulta}".
 
 Encontramos estos lugares:
 ${lista}
 
-Responde en máximo 2 oraciones, en español informal y cálido, recomendando los lugares más relevantes.`,
-  })
+Responde en máximo 2 oraciones, en español informal y cálido, recomendando los lugares más relevantes.`
+  )
 
-  return response.text ?? 'Encontré varios lugares que te pueden interesar.'
+  return texto || 'Encontré varios lugares que te pueden interesar.'
 }

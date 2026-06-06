@@ -1,12 +1,52 @@
-import { gemini, MODELO } from '@/lib/gemini'
 import Anthropic from '@anthropic-ai/sdk'
-import type { Intencion, RespuestaAgente } from '@/types'
+import { gemini, MODELO } from '@/lib/gemini'
+import { CONOCIMIENTO_DURANGO, PERSONALIDAD_AGENTE, getContextoTemporal } from '@/lib/contexto-durango'
+import type { Intencion, RespuestaAgente, Negocio } from '@/types'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
-const SYSTEM_PROMPT = `Eres el agente central de DuranGo AI, sistema inteligente de consumo local para Durango, México.
+export interface MensajeHistorial {
+  rol: 'usuario' | 'agente'
+  contenido: string
+}
 
-Interpreta el mensaje del usuario y responde ÚNICAMENTE con un JSON válido con esta estructura exacta:
+export interface ContextoUsuario {
+  preferencias?: string[]
+  presupuesto?: string
+  ubicacion?: string
+}
+
+function buildSystemPrompt(negocios: Negocio[], contextoUsuario?: ContextoUsuario): string {
+  // Capa 4 — Memoria de negocios en contexto
+  const catalogoNegocios = negocios.length > 0
+    ? `NEGOCIOS REGISTRADOS EN DURANGO GO (${negocios.length} disponibles):
+${negocios.map(n =>
+  `• ${n.nombre} | ${n.categoria} | ${n.direccion} | ${n.horario} | lat:${n.lat},lng:${n.lng}`
+).join('\n')}`
+    : 'No hay negocios registrados aún.'
+
+  // Capa 3 — Contexto del usuario
+  const contextoUser = contextoUsuario
+    ? `CONTEXTO DEL USUARIO EN ESTA SESIÓN:
+${contextoUsuario.preferencias?.length ? `Preferencias: ${contextoUsuario.preferencias.join(', ')}` : ''}
+${contextoUsuario.presupuesto ? `Presupuesto: ${contextoUsuario.presupuesto}` : ''}
+${contextoUsuario.ubicacion ? `Ubicación: ${contextoUsuario.ubicacion}` : ''}`.trim()
+    : ''
+
+  return `Eres el agente de DuranGo AI — sistema de consumo local para Durango, México.
+
+${PERSONALIDAD_AGENTE}
+
+${CONOCIMIENTO_DURANGO}
+
+${getContextoTemporal()}
+
+${catalogoNegocios}
+
+${contextoUser}
+
+INSTRUCCIÓN CRÍTICA:
+Responde ÚNICAMENTE con un JSON válido, sin texto extra, sin backticks, sin markdown:
 {
   "intent": "buscar_negocios" | "generar_ruta" | "registrar_negocio" | "saludo" | "otro",
   "params": {
@@ -15,50 +55,80 @@ Interpreta el mensaje del usuario y responde ÚNICAMENTE con un JSON válido con
     "tiempo_disponible": número en minutos o null,
     "tipo_ruta": "gastronomica" | "cultural" | "artesanal" | "mixta" | null
   },
-  "respuesta": "texto corto y amigable en español para el usuario"
+  "respuesta": "respuesta corta, auténtica, en tono duranguense"
 }
 
-Reglas:
-- Si el usuario quiere comer, buscar lugares o preguntar qué hay cerca: intent = buscar_negocios
-- Si el usuario quiere una ruta, itinerario o plan: intent = generar_ruta
-- Si el usuario quiere registrar su negocio: intent = registrar_negocio
-- No incluyas texto fuera del JSON. No uses markdown ni backticks.`
+Reglas de intent:
+- buscar_negocios: quiere comer, tomar, comprar, encontrar lugar, qué hay cerca
+- generar_ruta: quiere ruta, itinerario, plan, recorrido, qué hacer en X tiempo
+- registrar_negocio: quiere registrar o publicar su negocio
+- saludo: solo saluda
+- otro: solo si no encaja en nada anterior`
+}
 
-async function intentarConGemini(mensaje: string): Promise<RespuestaAgente> {
-  const response = await gemini.models.generateContent({
+function buildHistorial(historial: MensajeHistorial[]): Array<{ role: 'user' | 'assistant'; content: string }> {
+  return historial.slice(-6).map(m => ({
+    role: m.rol === 'usuario' ? 'user' : 'assistant',
+    content: m.contenido,
+  }))
+}
+
+async function intentarConGemini(
+  mensaje: string,
+  systemPrompt: string,
+  historial: MensajeHistorial[]
+): Promise<RespuestaAgente> {
+  const conversacion = historial.length > 0
+    ? historial.map(m => `${m.rol === 'usuario' ? 'Usuario' : 'Agente'}: ${m.contenido}`).join('\n') + '\n\n'
+    : ''
+
+  const resp = await gemini.models.generateContent({
     model: MODELO,
-    contents: `${SYSTEM_PROMPT}\n\nMensaje del usuario: "${mensaje}"`,
+    contents: `${systemPrompt}\n\n${conversacion}Usuario: "${mensaje}"`,
   })
-  return JSON.parse((response.text ?? '{}').trim())
+  return JSON.parse((resp.text ?? '{}').trim())
 }
 
-async function intentarConClaude(mensaje: string): Promise<RespuestaAgente> {
-  const response = await anthropic.messages.create({
+async function intentarConClaude(
+  mensaje: string,
+  systemPrompt: string,
+  historial: MensajeHistorial[]
+): Promise<RespuestaAgente> {
+  const mensajes = [
+    ...buildHistorial(historial),
+    { role: 'user' as const, content: `Usuario: "${mensaje}"` },
+  ]
+
+  const resp = await anthropic.messages.create({
     model: 'claude-haiku-4-5-20251001',
     max_tokens: 512,
-    messages: [
-      {
-        role: 'user',
-        content: `${SYSTEM_PROMPT}\n\nMensaje del usuario: "${mensaje}"`,
-      },
-    ],
+    system: systemPrompt,
+    messages: mensajes,
   })
-  const texto = response.content[0].type === 'text' ? response.content[0].text.trim() : '{}'
-  return JSON.parse(texto)
+
+  const texto = resp.content[0].type === 'text' ? resp.content[0].text.trim() : '{}'
+  const limpio = texto.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim()
+  return JSON.parse(limpio)
 }
 
-export async function procesarMensaje(mensaje: string): Promise<RespuestaAgente> {
+export async function procesarMensaje(
+  mensaje: string,
+  negocios: Negocio[] = [],
+  historial: MensajeHistorial[] = [],
+  contextoUsuario?: ContextoUsuario
+): Promise<RespuestaAgente> {
+  const systemPrompt = buildSystemPrompt(negocios, contextoUsuario)
+
   try {
-    return await intentarConGemini(mensaje)
-  } catch (errorGemini) {
-    console.warn('Gemini falló, usando Claude como fallback:', errorGemini)
+    return await intentarConGemini(mensaje, systemPrompt, historial)
+  } catch {
     try {
-      return await intentarConClaude(mensaje)
+      return await intentarConClaude(mensaje, systemPrompt, historial)
     } catch {
       return {
         intent: 'otro' as Intencion,
         params: {},
-        respuesta: '¿Puedes decirme qué buscas? Puedo ayudarte a encontrar lugares, crear rutas o registrar tu negocio.',
+        respuesta: 'Ándale, algo salió mal. ¿Me repites qué buscas?',
       }
     }
   }
