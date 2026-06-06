@@ -40,7 +40,9 @@ export async function POST(request: NextRequest) {
       categoria,
       descripcion,
       direccion,
-      horario,
+      horario: body.horario ?? null,
+      telefono: body.telefono ?? null,
+      imagen_url: body.imagen_url ?? null,
       lat: lat ?? 24.0277,
       lng: lng ?? -104.6532,
     })

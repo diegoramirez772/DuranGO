@@ -10,6 +10,7 @@ export interface Negocio {
   lng: number
   horario: string
   telefono?: string | null
+  imagen_url?: string | null
   link_redes?: string | null
   created_at: string
 }
