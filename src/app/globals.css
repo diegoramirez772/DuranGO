@@ -7,16 +7,64 @@
 }
 
 :root {
-  --color-primary: #c8870a;
-  --color-secondary: #1a3a2a;
-  --color-bg: #f9f5ef;
-  --color-text: #1a1a1a;
+  --color-primary: #B8341B;
+  --color-secondary: #1C1008;
+  --color-bg: #F5F0E8;
+  --color-text: #1C1008;
 }
 
 html,
 body {
   height: 100%;
-  font-family: system-ui, sans-serif;
-  background-color: var(--color-bg);
+  font-family: 'Inter', system-ui, sans-serif;
+  background-color: #F5F0E8;
   color: var(--color-text);
+}
+
+body {
+  background-color: #F5F0E8;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #F5F0E8;
+}
+::-webkit-scrollbar-thumb {
+  background: #D4C4A8;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #B09878;
+}
+
+/* Focus styles */
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: #B8341B !important;
+}
+
+/* Animations */
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.15;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 0.25;
+  }
+}
+
+@keyframes wave {
+  0% {
+    transform: scaleY(0.4);
+  }
+  100% {
+    transform: scaleY(1.6);
+  }
 }

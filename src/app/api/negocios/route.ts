@@ -17,17 +17,39 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   const body = await request.json()
-  const { transcripcion } = body
+  const { transcripcion, nombre, categoria, descripcion, direccion, telefono, horario, lat, lng } = body
 
-  if (!transcripcion || typeof transcripcion !== 'string') {
-    return Response.json({ error: 'Transcripción requerida' }, { status: 400 })
+  if (transcripcion) {
+    const resultado = await procesarRegistroVoz(transcripcion)
+
+    if (!resultado.exito) {
+      return Response.json({ error: resultado.error }, { status: 400 })
+    }
+
+    return Response.json({ negocio: resultado.negocio, datos: resultado.datos })
   }
 
-  const resultado = await procesarRegistroVoz(transcripcion)
-
-  if (!resultado.exito) {
-    return Response.json({ error: resultado.error }, { status: 400 })
+  if (!nombre || !categoria) {
+    return Response.json({ error: 'Faltan campos obligatorios' }, { status: 400 })
   }
 
-  return Response.json({ negocio: resultado.negocio, datos: resultado.datos })
+  const { data, error } = await supabase
+    .from('negocios')
+    .insert({
+      nombre,
+      categoria,
+      descripcion,
+      direccion,
+      horario,
+      lat: lat ?? 24.0277,
+      lng: lng ?? -104.6532,
+    })
+    .select()
+    .single()
+
+  if (error || !data) {
+    return Response.json({ error: 'Error al guardar el negocio en base de datos' }, { status: 500 })
+  }
+
+  return Response.json({ negocio: data })
 }

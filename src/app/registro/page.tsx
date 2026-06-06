@@ -1,4 +1,15 @@
-// Página de registro de negocio por voz para comerciantes (Irvin)
+'use client'
+
+import { RegistroView } from "@/components/ui/RegistroView";
+import { useRouter } from "next/navigation";
+
 export default function RegistroPage() {
-  return null
+  const router = useRouter();
+  return <RegistroView onGoToExplore={(id) => {
+    if (id) {
+      router.push(`/mapa?id=${id}`);
+    } else {
+      router.push("/mapa");
+    }
+  }} />;
 }

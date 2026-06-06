@@ -1,4 +1,5 @@
-// Vista principal — mapa interactivo + panel de chat conversacional (Irvin)
+import { ExplorarView } from "@/components/ui/ExplorarView";
+
 export default function MapaPage() {
-  return null
+  return <ExplorarView />;
 }

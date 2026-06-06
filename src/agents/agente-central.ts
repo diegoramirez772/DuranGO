@@ -3,7 +3,7 @@ import { gemini, MODELO } from '@/lib/gemini'
 import { CONOCIMIENTO_DURANGO, PERSONALIDAD_AGENTE, getContextoTemporal } from '@/lib/contexto-durango'
 import type { Intencion, RespuestaAgente, Negocio } from '@/types'
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY || 'placeholder-anthropic-key' })
 
 export interface MensajeHistorial {
   rol: 'usuario' | 'agente'
