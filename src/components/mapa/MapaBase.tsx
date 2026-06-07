@@ -1,10 +1,20 @@
 'use client'
 
-import { useEffect, useId, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+import { MapPin, Phone, Clock, ExternalLink } from 'lucide-react'
 import type { Negocio, Coordenada } from '@/types'
+
+function getSocialPlatform(url: string): { nombre: string; bg: string; color: string } {
+  const u = url.toLowerCase();
+  if (u.includes('tiktok.com')) return { nombre: 'TikTok', bg: '#1a1a1a', color: 'white' };
+  if (u.includes('instagram.com')) return { nombre: 'Instagram', bg: '#E1306C', color: 'white' };
+  if (u.includes('facebook.com')) return { nombre: 'Facebook', bg: '#1877F2', color: 'white' };
+  if (u.includes('wa.me') || u.includes('whatsapp')) return { nombre: 'WhatsApp', bg: '#25D366', color: 'white' };
+  return { nombre: 'Ver perfil', bg: '#7C4A2A', color: 'white' };
+}
 
 // Category colors matching the design system
 const CATEGORY_COLORS: Record<string, string> = {
@@ -20,27 +30,41 @@ const CATEGORY_COLORS: Record<string, string> = {
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
-  antojitos: '🌮 Antojitos',
-  mezcal: '🥃 Mezcal',
-  artesanias: '✂️ Artesanías',
-  servicios: '🔧 Servicios',
-  tienda: '🛍️ Tienda',
-  transporte: '🚛 Transporte',
-  flores: '🌸 Flores',
-  cafe: '☕ Café',
-  otro: '📍 Local',
+  antojitos: 'Antojitos',
+  mezcal: 'Mezcal',
+  artesanias: 'Artesanías',
+  servicios: 'Servicios',
+  tienda: 'Tienda',
+  transporte: 'Transporte',
+  flores: 'Flores',
+  cafe: 'Café',
+  otro: 'Local',
 }
 
 interface MapaBaseProps {
   businesses: Negocio[]
   activeBusinessId: string | null
   onMarkerClick: (biz: Negocio) => void
+  onIniciarRuta: (biz: Negocio) => void
   routeCoordinates: Coordenada[] | null
+  userLocation?: Coordenada | null
 }
 
-// Helper component to update map view dynamically
-function MapController({ activeBusiness, routeCoordinates }: { activeBusiness: Negocio | null; routeCoordinates: Coordenada[] | null }) {
+function MapController({ activeBusiness, routeCoordinates, userLocation, flyToUser }: {
+  activeBusiness: Negocio | null
+  routeCoordinates: Coordenada[] | null
+  userLocation: Coordenada | null | undefined
+  flyToUser: React.MutableRefObject<(() => void) | null>
+}) {
   const map = useMap()
+  const userFlown = useRef(false)
+
+  // Exponer función para volar a ubicación del usuario desde fuera
+  useEffect(() => {
+    flyToUser.current = () => {
+      if (userLocation) map.setView([userLocation.lat, userLocation.lng], 17, { animate: true })
+    }
+  }, [userLocation, map, flyToUser])
 
   useEffect(() => {
     if (activeBusiness) {
@@ -51,6 +75,8 @@ function MapController({ activeBusiness, routeCoordinates }: { activeBusiness: N
     }
   }, [activeBusiness, routeCoordinates, map])
 
+  // NO fly automático — el mapa siempre arranca en Durango centro
+
   return null
 }
 
@@ -58,10 +84,13 @@ export default function MapaBase({
   businesses,
   activeBusinessId,
   onMarkerClick,
+  onIniciarRuta,
   routeCoordinates,
+  userLocation,
 }: MapaBaseProps) {
   const [isMounted, setIsMounted] = useState(false)
   const mapId = useId()
+  const flyToUserRef = useRef<(() => void) | null>(null)
 
   useEffect(() => {
     setIsMounted(true)
@@ -88,6 +117,17 @@ export default function MapaBase({
 
   const activeBusiness = businesses.find((b) => b.id === activeBusinessId) || null
 
+  const createUserIcon = () =>
+    L.divIcon({
+      className: '',
+      html: `<div style="position:relative;width:20px;height:20px;">
+        <div style="position:absolute;top:-8px;left:-8px;width:36px;height:36px;background:rgba(42,95,138,0.25);border-radius:50%;animation:userPulse 2s ease-out infinite;"></div>
+        <div style="width:20px;height:20px;background:#2A5F8A;border-radius:50%;border:3px solid white;box-shadow:0 2px 12px rgba(42,95,138,0.55);position:relative;z-index:2;"></div>
+      </div>`,
+      iconSize: [20, 20],
+      iconAnchor: [10, 10],
+    })
+
   // Create custom marker icon based on category and active state
   const createCustomIcon = (category: string, isActive: boolean) => {
     const color = CATEGORY_COLORS[category] || CATEGORY_COLORS.otro
@@ -113,7 +153,7 @@ export default function MapaBase({
           transition: all 0.2s ease;
           cursor: pointer;
         ">
-          ${isActive ? '★' : '•'}
+          ${isActive ? '◆' : '·'}
         </div>
         <div style="
           width: 0;
@@ -163,6 +203,11 @@ export default function MapaBase({
         }
         .leaflet-popup-tip {
           background: white !important;
+        }
+        @keyframes userPulse {
+          0% { transform: scale(1); opacity: 0.5; }
+          70% { transform: scale(2.2); opacity: 0; }
+          100% { transform: scale(2.2); opacity: 0; }
         }
         .leaflet-popup-close-button {
           color: #7C4A2A !important;
@@ -252,7 +297,7 @@ export default function MapaBase({
         {businesses.map((biz) => {
           const isActive = biz.id === activeBusinessId
           const color = CATEGORY_COLORS[biz.categoria] || CATEGORY_COLORS.otro
-          const label = CATEGORY_LABELS[biz.categoria] || '📍 Local'
+          const label = CATEGORY_LABELS[biz.categoria] || 'Local'
           return (
             <Marker
               key={biz.id}
@@ -266,8 +311,14 @@ export default function MapaBase({
             >
               <Popup>
                 <div className="negocio-popup-card">
-                  {/* Color bar at top */}
-                  <div style={{ height: 5, backgroundColor: color }} />
+                  {biz.imagen_url ? (
+                    <div style={{ height: 100, overflow: 'hidden', position: 'relative' }}>
+                      <img src={biz.imagen_url} alt={biz.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.4) 0%, transparent 60%)' }} />
+                    </div>
+                  ) : (
+                    <div style={{ height: 5, backgroundColor: color }} />
+                  )}
                   <div className="negocio-popup-header">
                     <div
                       className="negocio-popup-badge"
@@ -290,27 +341,46 @@ export default function MapaBase({
                   <div className="negocio-popup-footer">
                     {biz.direccion && (
                       <div className="negocio-popup-meta">
-                        <span>📍</span>
+                        <MapPin size={11} color="#7C4A2A" style={{ flexShrink: 0 }} />
                         <span>{biz.direccion}</span>
                       </div>
                     )}
                     {biz.telefono && (
                       <div className="negocio-popup-meta">
-                        <span>📞</span>
-                        <span>{biz.telefono}</span>
+                        <Phone size={11} color="#7C4A2A" style={{ flexShrink: 0 }} />
+                        <a href={`tel:${biz.telefono}`} style={{ color: '#7C4A2A', textDecoration: 'none' }}>{biz.telefono}</a>
                       </div>
                     )}
                     {biz.horario && (
                       <div className="negocio-popup-meta">
-                        <span>🕐</span>
+                        <Clock size={11} color="#7C4A2A" style={{ flexShrink: 0 }} />
                         <span>{biz.horario}</span>
                       </div>
                     )}
+                    {biz.link_redes && (() => {
+                      const s = getSocialPlatform(biz.link_redes);
+                      return (
+                        <a
+                          href={biz.link_redes}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginTop: 6, padding: '4px 10px', borderRadius: 16, backgroundColor: s.bg, color: s.color, fontSize: 11, fontWeight: 600, textDecoration: 'none', fontFamily: "'Inter', sans-serif" }}
+                        >
+                          <ExternalLink size={10} /> {s.nombre}
+                        </a>
+                      );
+                    })()}
                     <button
                       className="negocio-popup-btn"
-                      onClick={() => onMarkerClick(biz)}
+                      onClick={() => { onMarkerClick(biz); onIniciarRuta(biz); }}
                     >
-                      Ver detalles →
+                      Iniciar Ruta con IA
+                    </button>
+                    <button
+                      onClick={() => onMarkerClick(biz)}
+                      style={{ width: '100%', padding: '7px 12px', background: 'none', border: '1px solid #E8D9C4', borderRadius: 8, fontSize: 12, fontWeight: 500, cursor: 'pointer', marginTop: 6, color: '#7C4A2A', fontFamily: "'Inter', sans-serif" }}
+                    >
+                      Ver en panel
                     </button>
                   </div>
                 </div>
@@ -318,6 +388,14 @@ export default function MapaBase({
             </Marker>
           )
         })}
+
+        {userLocation && (
+          <Marker
+            position={[userLocation.lat, userLocation.lng]}
+            icon={createUserIcon()}
+            zIndexOffset={1000}
+          />
+        )}
 
         {routeCoordinates && routeCoordinates.length > 0 && (
           <Polyline
@@ -329,8 +407,31 @@ export default function MapaBase({
           />
         )}
 
-        <MapController activeBusiness={activeBusiness} routeCoordinates={routeCoordinates} />
+        <MapController
+          activeBusiness={activeBusiness}
+          routeCoordinates={routeCoordinates}
+          userLocation={userLocation}
+          flyToUser={flyToUserRef}
+        />
       </MapContainer>
+
+      {/* Botón Mi Ubicación */}
+      {userLocation && (
+        <button
+          onClick={() => flyToUserRef.current?.()}
+          style={{
+            position: 'absolute', bottom: 24, right: 16, zIndex: 20,
+            width: 42, height: 42, borderRadius: '50%',
+            backgroundColor: 'white', border: '1px solid #E8D9C4',
+            boxShadow: '0 2px 12px rgba(0,0,0,0.15)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer',
+          }}
+          title="Volver a mi ubicación"
+        >
+          <MapPin size={18} color="#2A5F8A" />
+        </button>
+      )}
     </div>
   )
 }

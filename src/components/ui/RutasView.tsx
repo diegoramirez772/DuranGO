@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from "react";
-import { MapPin, Clock, ChevronRight, X, Star, Sparkles, Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { MapPin, Clock, ChevronRight, X, Star, Sparkles, Loader2, Utensils, Scissors, Wine, Map, Plus, Navigation } from "lucide-react";
 
 interface ParadaIA {
   negocio: { id: string; nombre: string; categoria: string; direccion: string; lat: number; lng: number };
@@ -14,10 +15,10 @@ interface RutaIA {
 }
 
 const TIPO_OPCIONES = [
-  { id: "gastronomica", label: "🌮 Gastronómica", color: "#C0571E" },
-  { id: "artesanal", label: "✂️ Artesanal", color: "#1A6B4A" },
-  { id: "mezcal", label: "🥃 Mezcal", color: "#6B3A8A" },
-  { id: "mixta", label: "✨ Mixta", color: "#B8341B" },
+  { id: "gastronomica", label: "Gastronómica", icon: <Utensils size={13} />, color: "#C0571E" },
+  { id: "artesanal", label: "Artesanal", icon: <Scissors size={13} />, color: "#1A6B4A" },
+  { id: "mezcal", label: "Mezcal", icon: <Wine size={13} />, color: "#6B3A8A" },
+  { id: "mixta", label: "Mixta", icon: <Sparkles size={13} />, color: "#B8341B" },
 ];
 
 function GeneradorRutaIA() {
@@ -69,9 +70,9 @@ function GeneradorRutaIA() {
               <button
                 key={t.id}
                 onClick={() => setTipo(t.id)}
-                style={{ padding: "5px 12px", borderRadius: 16, border: `1.5px solid ${tipo === t.id ? t.color : "#E8D9C4"}`, backgroundColor: tipo === t.id ? t.color : "white", color: tipo === t.id ? "white" : "#5C3A1E", fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "'Inter', sans-serif", transition: "all 0.2s" }}
+                style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 12px", borderRadius: 16, border: `1.5px solid ${tipo === t.id ? t.color : "#E8D9C4"}`, backgroundColor: tipo === t.id ? t.color : "white", color: tipo === t.id ? "white" : "#5C3A1E", fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "'Inter', sans-serif", transition: "all 0.2s" }}
               >
-                {t.label}
+                {t.icon} {t.label}
               </button>
             ))}
           </div>
@@ -99,7 +100,7 @@ function GeneradorRutaIA() {
         disabled={loading}
         style={{ width: "100%", padding: "12px 0", backgroundColor: loading ? "#E8C0B8" : "#B8341B", color: "white", border: "none", borderRadius: 12, fontSize: 14, fontWeight: 600, cursor: loading ? "default" : "pointer", fontFamily: "'Inter', sans-serif", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, transition: "background-color 0.2s" }}
       >
-        {loading ? <><Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} /> Generando con IA...</> : "✨ Generar mi ruta"}
+        {loading ? <><Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} /> Generando con IA...</> : <><Sparkles size={15} /> Generar mi ruta</>}
       </button>
 
       {error && <p style={{ fontSize: 12, color: "#B8341B", marginTop: 12, fontFamily: "'Inter', sans-serif" }}>{error}</p>}
@@ -215,7 +216,34 @@ const ROUTES: Route[] = [
   },
 ];
 
+const ROUTE_TIPO_MAP: Record<number, string> = {
+  1: 'artesanal',
+  2: 'mezcal',
+  3: 'gastronomica',
+  4: 'mixta',
+};
+
 function RouteModal({ route, onClose }: { route: Route; onClose: () => void }) {
+  const router = useRouter();
+  const [iniciando, setIniciando] = useState(false);
+
+  const iniciarRuta = async () => {
+    setIniciando(true);
+    try {
+      const tipo = ROUTE_TIPO_MAP[route.id] || 'mixta';
+      const res = await fetch('/api/rutas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tipo_ruta: tipo, tiempo_disponible: 90 }),
+      });
+      const data = await res.json();
+      if (data.paradas) {
+        localStorage.setItem('durango_ruta_pendiente', JSON.stringify(data));
+      }
+    } catch { /* si falla, igual navega */ }
+    router.push('/mapa');
+  };
+
   return (
     <div
       style={{
@@ -325,20 +353,30 @@ function RouteModal({ route, onClose }: { route: Route; onClose: () => void }) {
           </div>
 
           <button
+            onClick={iniciarRuta}
+            disabled={iniciando}
             style={{
               width: "100%",
               padding: "13px 0",
-              backgroundColor: "#B8341B",
+              backgroundColor: iniciando ? "#E8C0B8" : "#B8341B",
               color: "white",
               border: "none",
               borderRadius: 12,
               fontSize: 14,
               fontWeight: 600,
-              cursor: "pointer",
+              cursor: iniciando ? "default" : "pointer",
               fontFamily: "'Inter', sans-serif",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
             }}
           >
-            Iniciar Ruta →
+            {iniciando ? (
+              <><Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} /> Generando ruta con IA...</>
+            ) : (
+              <><Map size={16} /> Iniciar Ruta en el Mapa</>
+            )}
           </button>
         </div>
       </div>
@@ -543,13 +581,18 @@ export function RutasView() {
         </div>
 
         {/* Footer note */}
-        <div style={{ textAlign: "center", marginTop: 48, padding: "24px 0", borderTop: "1px solid #E8D9C4" }}>
-          <p style={{ fontSize: 13, color: "#B09878", fontFamily: "'Inter', sans-serif" }}>
-            ¿Tienes un negocio local?{" "}
-            <span style={{ color: "#B8341B", fontWeight: 600, cursor: "pointer" }}>
-              Regístralo gratis
-            </span>{" "}
-            y aparece en las rutas de barrio.
+        <div style={{ textAlign: "center", marginTop: 48, padding: "28px 0", borderTop: "1px solid #E8D9C4" }}>
+          <p style={{ fontSize: 13, color: "#B09878", fontFamily: "'Inter', sans-serif", marginBottom: 12 }}>
+            ¿Tienes un negocio local?
+          </p>
+          <a
+            href="/registro"
+            style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "10px 24px", backgroundColor: "#B8341B", color: "white", borderRadius: 12, fontSize: 13, fontWeight: 600, textDecoration: "none", fontFamily: "'Inter', sans-serif", boxShadow: "0 2px 12px rgba(184,52,27,0.25)" }}
+          >
+            <Plus size={14} /> Regístralo gratis
+          </a>
+          <p style={{ fontSize: 11, color: "#C0A882", marginTop: 8, fontFamily: "'Inter', sans-serif" }}>
+            Tu negocio aparece en el mapa, en el chat IA y en las rutas
           </p>
         </div>
       </div>

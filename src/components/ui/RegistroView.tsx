@@ -21,6 +21,9 @@ import {
   Coffee,
   Star,
   Loader2,
+  Sparkles,
+  Share2,
+  Store,
 } from "lucide-react";
 
 type Step = 1 | 2 | 3 | 4;
@@ -521,13 +524,16 @@ export function RegistroView({ onGoToExplore }: { onGoToExplore: (id?: string) =
           {/* Sugerencia de redes sociales */}
           {sugerenciaRedes && (
             <div style={{ backgroundColor: "white", borderRadius: 16, padding: "24px", border: "1px solid #F0E8D8", marginBottom: 24, boxShadow: "0 2px 12px rgba(0,0,0,0.05)" }}>
-              <p style={{ fontSize: 11, fontWeight: 700, color: "#B8341B", textTransform: "uppercase", letterSpacing: "1px", marginBottom: 16 }}>
-                ✨ La IA generó esto para tus redes
-              </p>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 16 }}>
+                <Sparkles size={14} color="#B8341B" />
+                <p style={{ fontSize: 11, fontWeight: 700, color: "#B8341B", textTransform: "uppercase", letterSpacing: "1px", margin: 0 }}>
+                  La IA generó esto para tus redes
+                </p>
+              </div>
 
               <div style={{ marginBottom: 16 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
-                  <span style={{ fontSize: 16 }}>📸</span>
+                  <Share2 size={14} color="#E1306C" />
                   <p style={{ fontSize: 12, fontWeight: 700, color: "#1C1008", margin: 0 }}>Instagram</p>
                 </div>
                 <div style={{ backgroundColor: "#F5F0E8", borderRadius: 10, padding: "12px 14px", position: "relative" }}>
@@ -545,7 +551,7 @@ export function RegistroView({ onGoToExplore }: { onGoToExplore: (id?: string) =
 
               <div>
                 <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
-                  <span style={{ fontSize: 16 }}>🎵</span>
+                  <Share2 size={14} color="#1a1a1a" />
                   <p style={{ fontSize: 12, fontWeight: 700, color: "#1C1008", margin: 0 }}>TikTok</p>
                 </div>
                 <div style={{ backgroundColor: "#F5F0E8", borderRadius: 10, padding: "12px 14px", position: "relative" }}>
@@ -769,7 +775,7 @@ export function RegistroView({ onGoToExplore }: { onGoToExplore: (id?: string) =
                     style={{ width: "100%", padding: "12px 16px", borderRadius: 10, border: `2px dashed ${geoStatus === 'loading' ? '#E8D9C4' : '#B8341B'}`, backgroundColor: geoStatus === 'loading' ? '#F5F0E8' : '#FFF5F3', cursor: geoStatus === 'loading' ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: 13, fontWeight: 600, color: geoStatus === 'loading' ? '#B09878' : '#B8341B', fontFamily: "'Inter', sans-serif", marginBottom: 8, transition: 'all 0.2s' }}
                   >
                     <MapPin size={15} />
-                    {geoStatus === 'loading' ? 'Obteniendo GPS...' : '📍 Usar mi ubicación actual'}
+                    {geoStatus === 'loading' ? 'Obteniendo GPS...' : 'Usar mi ubicación actual'}
                   </button>
                 )}
 
@@ -810,19 +816,33 @@ export function RegistroView({ onGoToExplore }: { onGoToExplore: (id?: string) =
                 <input value={form.hours} onChange={(e) => setForm({ ...form, hours: e.target.value })} placeholder="Ej. Lun–Sáb 8:00–14:00" style={inputStyle} />
               </div>
 
-              <div style={{ marginBottom: 14 }}>
-                <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#1C1008", marginBottom: 4 }}>
-                  TikTok / Instagram <span style={{ color: "#B09878", fontWeight: 400 }}>(opcional)</span>
-                </label>
-                <p style={{ fontSize: 11, color: "#B09878", marginBottom: 6, fontFamily: "'Inter', sans-serif" }}>
-                  Pega el link de tu perfil o un video — lo mostraremos en tu tarjeta del mapa
-                </p>
+              {/* Redes Sociales — bloque destacado */}
+              <div style={{ marginBottom: 14, backgroundColor: "#F5F0E8", borderRadius: 14, padding: "16px 18px", border: "1.5px solid #E8D9C4" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                  <div style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: "#1a1a1a", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <Share2 size={16} color="white" />
+                  </div>
+                  <div>
+                    <p style={{ fontSize: 13, fontWeight: 700, color: "#1C1008", margin: 0, fontFamily: "'Inter', sans-serif" }}>
+                      Tus Redes Sociales
+                    </p>
+                    <p style={{ fontSize: 11, color: "#7C4A2A", margin: 0, fontFamily: "'Inter', sans-serif" }}>
+                      TikTok o Instagram — aparecerá en tu tarjeta del mapa
+                    </p>
+                  </div>
+                </div>
                 <input
                   value={form.link_redes}
                   onChange={(e) => setForm({ ...form, link_redes: e.target.value })}
                   placeholder="https://www.tiktok.com/@tunegocio"
-                  style={inputStyle}
+                  style={{ ...inputStyle, backgroundColor: "white" }}
                 />
+                {form.link_redes && (
+                  <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "#1A6B4A", fontFamily: "'Inter', sans-serif" }}>
+                    <Check size={12} color="#1A6B4A" />
+                    Link de redes guardado — se mostrará en tu tarjeta
+                  </div>
+                )}
               </div>
 
               <div style={{ marginBottom: 20 }}>
@@ -894,7 +914,7 @@ export function RegistroView({ onGoToExplore }: { onGoToExplore: (id?: string) =
             <div style={{ display: "flex" }}>
               {["#C0571E", "#6B3A8A", "#1A6B4A", "#2A5F8A"].map((color, i) => (
                 <div key={i} style={{ width: 34, height: 34, borderRadius: "50%", backgroundColor: color, border: "2px solid white", marginLeft: i > 0 ? -10 : 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <span style={{ fontSize: 13, color: "white" }}>👤</span>
+                  <Store size={14} color="white" />
                 </div>
               ))}
             </div>

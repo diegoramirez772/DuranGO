@@ -14,6 +14,7 @@ export interface ContextoUsuario {
   preferencias?: string[]
   presupuesto?: string
   ubicacion?: string
+  ciudad?: string
 }
 
 function buildSystemPrompt(negocios: Negocio[], contextoUsuario?: ContextoUsuario): string {
@@ -26,12 +27,11 @@ ${negocios.map(n =>
     : 'No hay negocios registrados aún.'
 
   // Capa 3 — Contexto del usuario
-  const contextoUser = contextoUsuario
-    ? `CONTEXTO DEL USUARIO EN ESTA SESIÓN:
-${contextoUsuario.preferencias?.length ? `Preferencias: ${contextoUsuario.preferencias.join(', ')}` : ''}
-${contextoUsuario.presupuesto ? `Presupuesto: ${contextoUsuario.presupuesto}` : ''}
-${contextoUsuario.ubicacion ? `Ubicación: ${contextoUsuario.ubicacion}` : ''}`.trim()
-    : ''
+  const contextoUser = `CONTEXTO DEL USUARIO:
+Ciudad: ${contextoUsuario?.ciudad ?? 'Durango, Durango, México'}
+${contextoUsuario?.ubicacion ? `Coordenadas GPS: ${contextoUsuario.ubicacion}` : ''}
+${contextoUsuario?.preferencias?.length ? `Preferencias: ${contextoUsuario.preferencias.join(', ')}` : ''}
+${contextoUsuario?.presupuesto ? `Presupuesto: ${contextoUsuario.presupuesto}` : ''}`.trim()
 
   return `Eres el agente de DuranGo AI — sistema de consumo local para Durango, México.
 
@@ -44,6 +44,10 @@ ${getContextoTemporal()}
 ${catalogoNegocios}
 
 ${contextoUser}
+
+REGLA ABSOLUTA DE UBICACIÓN:
+El usuario SIEMPRE está en Durango, Durango, México — nunca en otra ciudad.
+Cuando respondas sobre ubicación, di "Durango" o "aquí en Durango", JAMÁS solo "México" o "tu ciudad".
 
 INSTRUCCIÓN CRÍTICA:
 Responde ÚNICAMENTE con un JSON válido, sin texto extra, sin backticks, sin markdown:

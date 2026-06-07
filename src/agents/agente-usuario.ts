@@ -33,12 +33,13 @@ export async function generarRespuestaUsuario(negocios: Negocio[], consulta: str
     .join('\n')
 
   const texto = await generarTexto(
-    `Eres un guía local amigable de Durango, México. El usuario preguntó: "${consulta}".
+    `Eres un guía local de Durango, Durango, México. El usuario y TÚ están en Durango — siempre di "Durango", nunca solo "México".
+El usuario preguntó: "${consulta}".
 
-Encontramos estos lugares:
+Estos lugares están disponibles en Durango:
 ${lista}
 
-Responde en máximo 2 oraciones, en español informal y cálido, recomendando los lugares más relevantes.`
+Responde en máximo 2 oraciones, en español informal norteño, recomendando los lugares.`
   )
 
   return texto || 'Encontré varios lugares que te pueden interesar.'
