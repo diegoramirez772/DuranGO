@@ -1,36 +1,172 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+DuranGo AI
 
-## Getting Started
+<p align="center">
+  <strong>AI-First Local Commerce Intelligence Platform</strong><br>
+  Connecting users with local businesses through conversational AI
+</p><p align="center">
+  <img src="https://img.shields.io/badge/AI-Gemini-blue?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Frontend-Next.js-black?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Backend-Supabase-green?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Architecture-AI--First-purple?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Status-MVP-orange?style=for-the-badge" />
+</p>---
 
-First, run the development server:
+Overview
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+DuranGo AI is an AI-driven platform that redefines how users discover and interact with local commerce.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Instead of relying on traditional interfaces (maps, filters, directories), the system uses a conversational agent that understands intent, processes context, and generates personalized consumption routes in real time.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+The platform is designed for Durango, Mexico, focusing on improving digital inclusion and economic visibility for local businesses.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+Problem
 
-To learn more about Next.js, take a look at the following resources:
+Local commerce ecosystems face critical limitations:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- Lack of digital presence among small businesses
+- Fragmented and unstructured information across social platforms
+- High technical barriers for business registration
+- Inefficient discovery experience for users
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+This results in a disconnect between available supply and potential demand.
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Solution
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+DuranGo AI introduces an AI-First system where:
+
+- The agent is the core system, not an auxiliary feature
+- Users interact through natural language
+- The system dynamically generates context-aware recommendations
+- Routes are constructed based on location, time, and preferences
+
+---
+
+Core Features
+
+Intelligent Business Discovery
+
+Contextual recommendations based on user intent, location, and preferences.
+
+Voice-Based Business Registration
+
+Enables merchants to register their business in under 2 minutes using natural speech.
+
+AI-Generated Consumption Routes
+
+Dynamic route generation optimized by time, budget, and user context.
+
+Conversational Interface
+
+Eliminates the need for menus and filters through natural interaction.
+
+Social Content Integration
+
+References external social content without duplicating or storing it.
+
+---
+
+Architecture
+
+The system follows an AI-First architecture, where all interactions are processed through a central agent.
+
+Components
+
+- Central AI Agent
+  Handles intent detection, recommendation generation, and route construction.
+
+- Business Agent
+  Processes merchant registration and structures business data.
+
+- User Agent
+  Interprets user queries and generates responses.
+
+- Frontend Layer (Next.js)
+  Renders agent decisions (maps, routes, results).
+
+- Backend (Supabase)
+  Manages persistence of users, businesses, and sessions.
+
+- Rendering Engine (CopilotKit)
+  Translates agent outputs into UI actions.
+
+---
+
+Tech Stack
+
+Layer| Technology| Purpose
+AI| Gemini API| NLP, reasoning, generation
+Frontend| Next.js| UI & rendering
+Backend| Supabase| Database & auth
+Agent Render| CopilotKit| Action execution
+Maps| Leaflet / Google Maps| Visualization
+Dev Accel| Antigravity| Code generation
+
+---
+
+Design Principles
+
+- AI-First Architecture
+- Conversational Interaction Model
+- Minimal Friction UX
+- Digital Inclusion Focus
+- Real-Time Context Awareness
+
+---
+
+Impact
+
+Economic
+
+Increases visibility and transactions for local businesses.
+
+Social
+
+Reduces digital barriers for non-technical merchants.
+
+Tourism
+
+Enhances discovery of culturally relevant local experiences.
+
+---
+
+Differentiation
+
+Feature| DuranGo AI| Google Maps| Yelp
+Voice Registration| ✅| ❌| ❌
+Conversational Agent| ✅| Limited| ❌
+AI Route Generation| ✅| ❌| ❌
+Local-first Focus| ✅| ❌| ❌
+Social Content Integration| ✅| ❌| ❌
+
+---
+
+Project Status
+
+«MVP (Hackathon Prototype)»
+
+The system is currently in the prototyping phase with a focus on validating the AI-first interaction model.
+
+---
+
+Future Work
+
+- Real-time data enrichment
+- Advanced recommendation models
+- Multi-city scalability
+- Merchant analytics dashboard
+
+---
+
+License
+
+This project is developed for research and prototyping purposes.
+
+---
+
+Author
+
+Developed as part of a hackathon project focused on AI-driven local commerce systems.
